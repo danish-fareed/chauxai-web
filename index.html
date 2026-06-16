@@ -1,0 +1,2460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChauxAI — Video Splitter</title>
+    <meta name="description" content="Auto-transcribe, analyze hooks, and split long-form videos into viral short clips. Connect your local ChauxAI agent to process videos.">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #070605;
+            --bg-surface: #110f0d;
+            --bg-surface-elevated: #1a1715;
+            --border-color: #221e1a;
+            --border-color-hover: #3d352e;
+            --text-main: #f5f0eb;
+            --text-muted: #9c938c;
+            --primary-gradient: linear-gradient(135deg, #7c3aed, #4f46e5);
+            --primary-accent: #7c3aed;
+            --secondary-accent: #f59e0b;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --card-glow: rgba(124, 58, 237, 0.12);
+            
+            /* Pastel Card Swatches */
+            --pastel-green-bg: rgba(16, 185, 129, 0.08);
+            --pastel-green-text: #34d399;
+            --pastel-green-border: rgba(52, 211, 153, 0.2);
+            
+            --pastel-purple-bg: rgba(124, 58, 237, 0.08);
+            --pastel-purple-text: #a78bfa;
+            --pastel-purple-border: rgba(167, 139, 250, 0.2);
+            
+            --pastel-yellow-bg: rgba(245, 158, 11, 0.08);
+            --pastel-yellow-text: #fbbf24;
+            --pastel-yellow-border: rgba(251, 191, 36, 0.2);
+            
+            --pastel-pink-bg: rgba(236, 72, 153, 0.08);
+            --pastel-pink-text: #f472b6;
+            --pastel-pink-border: rgba(244, 114, 182, 0.2);
+            
+            --pastel-blue-bg: rgba(59, 130, 246, 0.08);
+            --pastel-blue-text: #60a5fa;
+            --pastel-blue-border: rgba(96, 165, 250, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: none;
+            user-select: none;
+        }
+        
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Titlebar (web mode: no drag region, no window controls) ── */
+        .titlebar {
+            height: 44px;
+            background: var(--bg-base);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1.25rem;
+            position: relative;
+            z-index: 1000;
+            flex-shrink: 0;
+        }
+
+        .titlebar-brand {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .titlebar-brand svg {
+            fill: url(#brand-grad-mini);
+        }
+
+        .titlebar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .agent-url-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.3rem 0.75rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            max-width: 220px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .agent-url-chip:hover {
+            border-color: var(--primary-accent);
+            color: var(--text-main);
+        }
+
+        .agent-url-chip .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--error-color);
+            flex-shrink: 0;
+            box-shadow: 0 0 5px var(--error-color);
+            transition: all 0.3s;
+        }
+
+        .agent-url-chip .dot.online {
+            background: var(--success-color);
+            box-shadow: 0 0 5px var(--success-color);
+        }
+
+        /* Desktop App Layout with Sidebar */
+        .app-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .sidebar-header {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            padding-left: 0.5rem;
+        }
+
+        .sidebar-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .sidebar-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .sidebar-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 12px var(--card-glow);
+        }
+
+        .sidebar-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        /* Main Viewport */
+        .main-viewport {
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+            background: var(--bg-base);
+        }
+
+        .app-view {
+            display: none;
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .app-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hero Section */
+        .hero-section {
+            margin-bottom: 2rem;
+        }
+
+        .hero-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-title span {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            max-width: 520px;
+            line-height: 1.55;
+        }
+
+        /* Desktop Styled Card Widgets */
+        .widget-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .widget-card::after {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), transparent, rgba(79, 70, 229, 0.15));
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+        }
+
+        .form-control.no-icon {
+            padding-left: 1rem;
+        }
+
+        .textarea-control {
+            width: 100%;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.82rem;
+            min-height: 140px;
+            resize: vertical;
+            transition: all 0.2s ease;
+        }
+
+        .collapsible-trigger {
+            background: transparent;
+            border: none;
+            color: var(--primary-accent);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            align-self: flex-start;
+            margin-top: -0.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .collapsible-content {
+            display: none;
+            animation: slideDown 0.2s ease forwards;
+        }
+
+        .collapsible-content.expanded {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.01);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.25rem;
+        }
+
+        .toggle-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .toggle-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .toggle-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            transition: .2s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-muted);
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-accent);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(18px);
+            background-color: white;
+        }
+
+        .btn-submit {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.85rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Pipeline Tracker */
+        .pipeline-tracker {
+            display: none;
+            margin-top: 2rem;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .tracker-spinner {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem auto;
+        }
+
+        .tracker-spinner-ring {
+            box-sizing: border-box;
+            display: block;
+            position: absolute;
+            width: 38px;
+            height: 38px;
+            margin: 5px;
+            border: 4px solid var(--primary-accent);
+            border-radius: 50%;
+            animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            border-color: var(--primary-accent) transparent transparent transparent;
+        }
+
+        .tracker-spinner-ring:nth-child(1) { animation-delay: -0.45s; }
+        .tracker-spinner-ring:nth-child(2) { animation-delay: -0.3s; }
+        .tracker-spinner-ring:nth-child(3) { animation-delay: -0.15s; }
+
+        @keyframes lds-ring {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tracker-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .tracker-subtitle {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .pipeline-bar-wrapper {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: 99px;
+            height: 8px;
+            overflow: hidden;
+            width: 100%;
+            margin-bottom: 1.25rem;
+        }
+
+        .pipeline-bar-fill {
+            background: var(--primary-gradient);
+            width: 0%;
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.3s ease;
+        }
+
+        .pipeline-steps {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .pipeline-step-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            flex: 1;
+            opacity: 0.4;
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-step-node.active {
+            opacity: 1;
+            color: var(--primary-accent);
+        }
+
+        .pipeline-step-node.completed {
+            opacity: 1;
+            color: var(--success-color);
+        }
+
+        .step-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+            background: var(--bg-surface-elevated);
+        }
+
+        .step-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .take-me-btn-container {
+            margin-top: 1.5rem;
+            display: none;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .btn-glowing {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.75rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-glowing:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Projects List */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-header-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .project-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+        }
+
+        .project-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-accent);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 8px var(--card-glow);
+        }
+
+        .project-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-muted);
+        }
+
+        .project-folder-icon {
+            color: var(--primary-accent);
+            display: flex;
+            align-items: center;
+        }
+
+        .project-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .project-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.65rem;
+            margin-top: auto;
+        }
+
+        /* Project details Page */
+        .project-details-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.25rem;
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            cursor: pointer;
+            align-self: flex-start;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-main);
+        }
+
+        .project-details-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .project-stats-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.85rem;
+            border-radius: 99px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-magic-all {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-magic-all:hover {
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Pastel clip cards */
+        .pastel-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .pastel-card {
+            background: var(--bg-surface);
+            border-radius: 14px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 180px;
+            transition: all 0.2s ease;
+        }
+
+        .pastel-card:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+            border-color: var(--pastel-border);
+        }
+
+        .pastel-card.pastel-green { --pastel-bg: var(--pastel-green-bg); --pastel-text: var(--pastel-green-text); --pastel-border: var(--pastel-green-border); }
+        .pastel-card.pastel-purple { --pastel-bg: var(--pastel-purple-bg); --pastel-text: var(--pastel-purple-text); --pastel-border: var(--pastel-purple-border); }
+        .pastel-card.pastel-yellow { --pastel-bg: var(--pastel-yellow-bg); --pastel-text: var(--pastel-yellow-text); --pastel-border: var(--pastel-yellow-border); }
+        .pastel-card.pastel-pink { --pastel-bg: var(--pastel-pink-bg); --pastel-text: var(--pastel-pink-text); --pastel-border: var(--pastel-pink-border); }
+        .pastel-card.pastel-blue { --pastel-bg: var(--pastel-blue-bg); --pastel-text: var(--pastel-blue-text); --pastel-border: var(--pastel-blue-border); }
+
+        .pastel-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.65rem;
+        }
+
+        .pastel-card-tag {
+            background: var(--pastel-bg);
+            color: var(--pastel-text);
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 99px;
+            border: 1px solid var(--pastel-border);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pastel-card-time {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .pastel-card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .pastel-card-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+
+        .pastel-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.75rem;
+        }
+
+        .pastel-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .card-action-btn {
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .card-action-btn:hover {
+            background: var(--primary-accent);
+            border-color: transparent;
+            color: white;
+        }
+
+        .card-status-indicator {
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.2rem 0.45rem;
+            border-radius: 5px;
+        }
+
+        .status-fresh { background: rgba(255, 255, 255, 0.03); color: var(--text-muted); border: 1px solid var(--border-color); }
+        .status-magic { background: rgba(124, 58, 237, 0.12); color: var(--pastel-purple-text); border: 1px solid rgba(124, 58, 237, 0.2); }
+
+        /* Status footer bar */
+        .status-bar {
+            height: 28px;
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-indicator-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--error-color);
+            box-shadow: 0 0 6px var(--error-color);
+            transition: all 0.3s ease;
+        }
+
+        .status-indicator-dot.online {
+            background: var(--success-color);
+            box-shadow: 0 0 6px var(--success-color);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            animation: modalScale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes modalScale {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .modal-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+
+        .settings-locked-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .locked-field {
+            flex: 1;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            padding: 0.65rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        .locked-field-left {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .locked-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; }
+        .locked-val { font-weight: 700; color: var(--text-main); }
+
+        .form-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .range-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .range-wrapper input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary-accent);
+        }
+
+        .range-val {
+            font-size: 0.8rem;
+            font-weight: 700;
+            min-width: 38px;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255,255,255,0.02);
+            border-color: var(--text-muted);
+        }
+
+        .btn-save {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.2);
+            transition: all 0.2s;
+        }
+
+        /* Icon button */
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+
+        /* Video Preview */
+        .video-modal-container {
+            width: 100%;
+            max-width: 380px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .video-wrapper {
+            width: 100%;
+            aspect-ratio: 9/16;
+            background: black;
+            position: relative;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Magic Overlay */
+        .magic-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(7, 6, 5, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .magic-overlay.active { display: flex; }
+
+        .magic-wand-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+            animation: floatWand 2s ease-in-out infinite;
+        }
+
+        @keyframes floatWand {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(12deg); }
+        }
+
+        .magic-wand-icon {
+            color: var(--primary-accent);
+            filter: drop-shadow(0 0 10px var(--primary-accent));
+        }
+
+        .magic-sparks {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+
+        .spark {
+            position: absolute;
+            background: var(--secondary-accent);
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            opacity: 0;
+            animation: shootSpark 1.5s ease-in-out infinite;
+        }
+
+        .spark:nth-child(1) { top: 20%; left: 30%; animation-delay: 0.2s; }
+        .spark:nth-child(2) { top: 50%; left: 80%; animation-delay: 0.6s; }
+        .spark:nth-child(3) { top: 70%; left: 20%; animation-delay: 0.9s; }
+        .spark:nth-child(4) { top: 10%; left: 60%; animation-delay: 1.2s; }
+
+        @keyframes shootSpark {
+            0% { transform: scale(0) translate(0, 0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1.5) translate(var(--tx, 15px), var(--ty, -15px)); opacity: 0; }
+        }
+
+        .magic-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #a78bfa, #f472b6, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .magic-status-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            max-width: 420px;
+            margin-bottom: 1.25rem;
+            min-height: 40px;
+        }
+
+        .magic-progress-track {
+            width: 280px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .magic-progress-fill {
+            background: linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b);
+            width: 0%;
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+
+        /* ── Agent Setup / Onboarding Modal ── */
+        .setup-modal-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--primary-accent);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 0 60px rgba(124, 58, 237, 0.2), 0 20px 60px rgba(0,0,0,0.6);
+            animation: modalScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            overflow: hidden;
+        }
+
+        .setup-header {
+            background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(79,70,229,0.1));
+            border-bottom: 1px solid var(--border-color);
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+        }
+
+        .setup-logo {
+            width: 52px;
+            height: 52px;
+            background: var(--primary-gradient);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .setup-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 0.3rem;
+        }
+
+        .setup-subtitle {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .setup-body {
+            padding: 1.75rem 2rem;
+        }
+
+        .setup-step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            align-items: flex-start;
+        }
+
+        .setup-step-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .setup-step-text {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .setup-step-text strong {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .setup-step-text code {
+            font-family: monospace;
+            font-size: 0.78rem;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            padding: 1px 6px;
+            border-radius: 4px;
+            color: #a78bfa;
+        }
+
+        .setup-divider {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 1.25rem 0;
+        }
+
+        .setup-url-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .setup-url-input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .setup-url-input {
+            flex: 1;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .setup-url-input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+        }
+
+        .setup-connect-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(124,58,237,0.25);
+        }
+
+        .setup-connect-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(124,58,237,0.4);
+        }
+
+        .setup-help-text {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* Toasts */
+        .toast-container {
+            position: fixed;
+            bottom: 2.5rem;
+            right: 1.5rem;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.75rem 1.15rem;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            min-width: 220px;
+            pointer-events: auto;
+            animation: toastSlide 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes toastSlide {
+            from { transform: translateX(40px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success { border-left: 3px solid var(--success-color); }
+        .toast.error { border-left: 3px solid var(--error-color); }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Gradients -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#7c3aed" />
+                <stop offset="100%" stop-color="#4f46e5" />
+            </linearGradient>
+            <linearGradient id="brand-grad-mini" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#7c3aed" />
+                <stop offset="100%" stop-color="#4f46e5" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Titlebar (web mode — no Tauri window controls shown) -->
+    <header class="titlebar">
+        <div class="titlebar-brand">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#brand-grad-mini)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="url(#brand-grad-mini)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="url(#brand-grad-mini)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            ChauxAI
+        </div>
+        <!-- Agent URL chip in titlebar for quick access -->
+        <div class="titlebar-actions">
+            <div class="agent-url-chip" id="agent-url-chip" onclick="openSetupModal()" title="Click to change agent URL">
+                <span class="dot" id="chip-dot"></span>
+                <span id="chip-url-text">Not connected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Desktop Workspace Layout -->
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-menu">
+                <div class="sidebar-header">ChauxAI</div>
+                <button class="sidebar-btn" id="nav-btn-import" onclick="navigateTo('view-import')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+                    New Splitter
+                </button>
+                <button class="sidebar-btn" id="nav-btn-projects" onclick="navigateTo('view-projects')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                    Projects Library
+                </button>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="sidebar-btn" onclick="openSetupModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+                    Agent Connection
+                </button>
+                <button class="sidebar-btn" onclick="toggleSettingsModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Configurations
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Viewport Area -->
+        <main class="main-viewport">
+
+            <!-- VIEW 1: Import / Splitter Page -->
+            <section id="view-import" class="app-view active">
+                <div class="hero-section">
+                    <h1 class="hero-title">Video <span>Splitter</span></h1>
+                    <p class="hero-subtitle">Input a podcast or video link to extract viral short-form clips. Your local agent handles all the processing — no cloud uploads needed.</p>
+                </div>
+                
+                <div class="widget-card" style="max-width: 640px; margin: 0 auto;">
+                    <form id="splitter-form" onsubmit="handleSplitSubmit(event)">
+                        <div class="form-group">
+                            <label for="url">Video URL</label>
+                            <div class="input-wrapper">
+                                <span class="input-icon">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                </span>
+                                <input type="url" id="url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." required>
+                            </div>
+                        </div>
+
+                        <button type="button" class="collapsible-trigger" onclick="toggleJSONCollapse()">
+                            <span id="json-arrow">▶</span> + Provide Cuts Payload (JSON)
+                        </button>
+                        
+                        <div class="collapsible-content" id="json-cuts-container">
+                            <div class="form-group">
+                                <label for="json_data">Cuts Payload (JSON)</label>
+                                <textarea id="json_data" class="textarea-control" placeholder='[
+  {
+    "title": "Viral Hook Segment",
+    "start": 45,
+    "end": 95
+  }
+]'></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project_name">Project Label (Optional)</label>
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                    </span>
+                                    <input type="text" id="project_name" class="form-control" placeholder="Defaults to video title">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Auto Extract -->
+                        <div class="toggle-row">
+                            <div class="toggle-info">
+                                <span class="toggle-title">AI Clip Extraction (GPT-4o)</span>
+                                <span class="toggle-desc">Automatically fetch transcript and isolate hooks.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="ai_extract" onchange="toggleAiFields()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="form-group" id="openai-key-group" style="display: none;">
+                            <label for="openai_key">OpenAI API Key</label>
+                            <div class="input-wrapper">
+                                <span class="input-icon">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </span>
+                                <input type="password" id="openai_key" class="form-control" placeholder="sk-proj-...">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+                            <button type="submit" class="btn-submit" id="submit-btn" style="flex: 1;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Split Video
+                            </button>
+                            
+                            <button type="button" id="copy-prompt-btn" class="sidebar-btn" style="width: auto; padding: 0.75rem 1.25rem; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="copyAIPrompt()">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                Get AI Prompt
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Tracker Box -->
+                    <div class="pipeline-tracker" id="pipeline-tracker">
+                        <div class="tracker-spinner">
+                            <div class="tracker-spinner-ring"></div>
+                            <div class="tracker-spinner-ring"></div>
+                            <div class="tracker-spinner-ring"></div>
+                            <div class="tracker-spinner-ring"></div>
+                        </div>
+                        <div class="tracker-title" id="tracker-title">Connecting...</div>
+                        <div class="tracker-subtitle" id="tracker-subtitle">Starting process channel...</div>
+                        <div class="pipeline-bar-wrapper">
+                            <div class="pipeline-bar-fill" id="pipeline-bar"></div>
+                        </div>
+                        <div class="pipeline-steps">
+                            <div class="pipeline-step-node" id="step-download">
+                                <div class="step-circle">1</div>
+                                <span class="step-label">Download</span>
+                            </div>
+                            <div class="pipeline-step-node" id="step-extract">
+                                <div class="step-circle">2</div>
+                                <span class="step-label">Validate</span>
+                            </div>
+                            <div class="pipeline-step-node" id="step-split">
+                                <div class="step-circle">3</div>
+                                <span class="step-label">Split</span>
+                            </div>
+                        </div>
+                        <div class="take-me-btn-container" id="take-me-btn-container">
+                            <button class="btn-glowing" id="take-me-btn">
+                                Open Project Output
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: Projects Library -->
+            <section id="view-projects" class="app-view">
+                <div class="page-header">
+                    <h1 class="page-header-title">Projects</h1>
+                    <button class="sidebar-btn" style="width:auto; padding: 0.5rem 1rem; border: 1px solid var(--border-color);" onclick="refreshProjects()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="projects-grid" id="projects-grid">
+                    <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem 0;">
+                        Loading projects...
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: Single Project details Page -->
+            <section id="view-project-details" class="app-view">
+                <div class="project-details-header">
+                    <a class="back-link" onclick="navigateTo('view-projects')">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        All Projects
+                    </a>
+                    <div class="project-details-row">
+                        <div>
+                            <h1 class="page-header-title" id="details-project-name">Project Details</h1>
+                            <div class="project-stats-container" style="margin-top: 0.35rem;">
+                                <div class="stat-badge">
+                                    <span style="background: var(--text-muted); width: 6px; height: 6px; border-radius: 50%;"></span>
+                                    <span id="stat-total-clips">0 clips</span>
+                                </div>
+                                <div class="stat-badge">
+                                    <span style="background: var(--primary-accent); width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 4px var(--primary-accent);"></span>
+                                    <span id="stat-magic-clips">0 Magic Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-magic-all" id="btn-magic-all-clips" onclick="triggerMagicPipeline()">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                            ✦ Run Magic on All Clips
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pastel-cards-grid" id="project-clips-grid">
+                    <!-- Segment Cards inserted by JS -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <footer class="status-bar">
+        <div class="status-left">
+            <span class="status-indicator-dot" id="status-dot"></span>
+            <span id="status-text">Checking agent status...</span>
+        </div>
+        <div>ChauxAI Web — v1.0.0</div>
+    </footer>
+
+    <!-- ── AGENT SETUP / ONBOARDING MODAL ── -->
+    <div class="modal-overlay active" id="setup-modal">
+        <div class="setup-modal-container">
+            <div class="setup-header">
+                <div class="setup-logo">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
+                        <path d="M2 17L12 22L22 17"/>
+                        <path d="M2 12L12 17L22 12"/>
+                    </svg>
+                </div>
+                <div class="setup-title">Connect Your Agent</div>
+                <div class="setup-subtitle">ChauxAI runs video processing locally on your machine.<br>Follow these steps to get started.</div>
+            </div>
+
+            <div class="setup-body">
+                <div class="setup-step">
+                    <div class="setup-step-num">1</div>
+                    <div class="setup-step-text">
+                        <strong>Install Python dependencies</strong><br>
+                        In your <code>automation_scripts</code> folder, run:<br>
+                        <code>pip install -r requirements.txt</code>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="setup-step-num">2</div>
+                    <div class="setup-step-text">
+                        <strong>Start the local agent</strong><br>
+                        Run: <code>python app.py</code> — it will start on port <code>5000</code>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="setup-step-num">3</div>
+                    <div class="setup-step-text">
+                        <strong>Enter your agent URL below</strong><br>
+                        Use <code>http://localhost:5000</code> if this browser is on the same PC, or your local network IP like <code>http://192.168.1.x:5000</code>
+                    </div>
+                </div>
+
+                <hr class="setup-divider">
+
+                <label class="setup-url-label" for="setup-url-input">Local Agent URL</label>
+                <div class="setup-url-input-row">
+                    <input
+                        type="text"
+                        id="setup-url-input"
+                        class="setup-url-input"
+                        placeholder="http://localhost:5000"
+                        value="http://localhost:5000"
+                        spellcheck="false"
+                        autocomplete="off"
+                    >
+                    <button class="setup-connect-btn" onclick="connectAgent()">Connect →</button>
+                </div>
+                <div class="setup-help-text">
+                    This URL is saved in your browser and never sent anywhere.
+                    You can change it anytime via <strong>Agent Connection</strong> in the sidebar.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal" onclick="closeSettingsModalOnOutside(event)">
+        <div class="modal-container">
+            <div class="modal-header">
+                <span class="modal-title">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Configurations
+                </span>
+                <button class="icon-btn" onclick="toggleSettingsModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="modal-section-title">Pipeline Slicing</div>
+                <div class="settings-locked-group">
+                    <div class="locked-field">
+                        <div class="locked-field-left">
+                            <span class="locked-label">Trim Precision</span>
+                            <span class="locked-val">Accurate</span>
+                        </div>
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="locked-field">
+                        <div class="locked-field-left">
+                            <span class="locked-label">Quality Level</span>
+                            <span class="locked-val">Best</span>
+                        </div>
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                    </div>
+                </div>
+
+                <div class="modal-section-title">OpenAI Key</div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <input type="password" id="settings_openai_key" class="form-control no-icon" placeholder="sk-proj-...">
+                </div>
+
+                <div class="modal-section-title">Magic Transforms</div>
+                <div class="form-group">
+                    <label for="magic_zoom">Center Zoom: <span id="magic_zoom_val">5%</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" id="magic_zoom" min="0" max="25" step="1" value="5" oninput="document.getElementById('magic_zoom_val').innerText = this.value + '%'">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="magic_filter">Color Grading</label>
+                        <select id="magic_filter" class="form-control no-icon">
+                            <option value="warm">Warm grade (Recommended)</option>
+                            <option value="cool">Cool studio</option>
+                            <option value="vintage">Vintage film</option>
+                            <option value="cyber">Cyberpunk grade</option>
+                            <option value="none">None (Keep original)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="align-self: center; margin-top: 1rem;">
+                        <div class="toggle-row" style="margin-bottom: 0; padding: 0.5rem 1rem;">
+                            <span class="toggle-title" style="font-size: 0.8rem;">Mirror Stream</span>
+                            <label class="switch">
+                                <input type="checkbox" id="magic_mirror" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="magic_speed">Speed: <span id="magic_speed_val">1.02x</span></label>
+                        <div class="range-wrapper">
+                            <input type="range" id="magic_speed" min="1.0" max="1.1" step="0.01" value="1.02" oninput="document.getElementById('magic_speed_val').innerText = this.value + 'x'">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="magic_pitch">Vocal Pitch: <span id="magic_pitch_val">1.01x</span></label>
+                        <div class="range-wrapper">
+                            <input type="range" id="magic_pitch" min="1.0" max="1.1" step="0.01" value="1.01" oninput="document.getElementById('magic_pitch_val').innerText = this.value + 'x'">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="magic_location">GPS Location Spoof</label>
+                        <select id="magic_location" class="form-control no-icon">
+                            <option value="london">London, UK</option>
+                            <option value="manchester">Manchester, UK</option>
+                            <option value="birmingham">Birmingham, UK</option>
+                            <option value="edinburgh">Edinburgh, UK</option>
+                            <option value="newyork">New York City, USA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="magic_device">Device Header Spoof</label>
+                        <select id="magic_device" class="form-control no-icon">
+                            <option value="iphone14">iPhone 14 Pro Max</option>
+                            <option value="iphone13">iPhone 13 Pro</option>
+                            <option value="iphone15">iPhone 15 Pro</option>
+                            <option value="samsung23">Samsung Galaxy S23 Ultra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="toggle-row" style="margin-bottom: 0;">
+                    <div class="toggle-info">
+                        <span class="toggle-title">Randomize Frame Content Hashes</span>
+                        <span class="toggle-desc">Slightly displace frame signatures to bypass filters.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="magic_scramble" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="toggleSettingsModal()">Cancel</button>
+                <button class="btn-save" onclick="saveSettings()">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Magic Loading Overlay -->
+    <div class="magic-overlay" id="magic-overlay">
+        <div class="magic-wand-container">
+            <svg class="magic-wand-icon" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 4V2M15 22v-2M20 9h2M2 9h2M18.36 5.64l1.42-1.42M4.22 19.78l1.42-1.42M18.36 12.36l1.42 1.42M4.22 5.64L5.64 4.22" stroke-linecap="round"/>
+                <path d="M19 13.5L10.5 5M12.5 15.5l-9 9" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="magic-sparks">
+                <div class="spark" style="--tx: 18px; --ty: -25px;"></div>
+                <div class="spark" style="--tx: -20px; --ty: -18px;"></div>
+                <div class="spark" style="--tx: 25px; --ty: 15px;"></div>
+                <div class="spark" style="--tx: -10px; --ty: 25px;"></div>
+            </div>
+        </div>
+        <div class="magic-title">Applying Magic Pipeline</div>
+        <div class="magic-status-text" id="magic-overlay-status">Rebuilding video container layouts &amp; optimizing audio spectrums...</div>
+        <div class="magic-progress-track">
+            <div class="magic-progress-fill" id="magic-progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Video Preview Modal -->
+    <div class="modal-overlay" id="video-preview-modal" onclick="closeVideoPreviewModal(event)">
+        <div class="video-modal-container">
+            <div class="video-wrapper">
+                <video id="preview-video-player" controls autoplay loop playsinline></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ── Core App Logic ── -->
+    <script>
+        // ── Agent URL (user-configurable, stored in localStorage) ──
+        const STORAGE_KEY_AGENT = 'chauxai_agent_url';
+        const STORAGE_KEY_SETTINGS = 'chauxai_settings';
+
+        function getAgentBase() {
+            return (localStorage.getItem(STORAGE_KEY_AGENT) || '').replace(/\/$/, '');
+        }
+
+        // Global State
+        let currentProjects = [];
+        let activeProjectName = null;
+        let globalSettings = {
+            openai_key: '',
+            zoom: 5,
+            mirror: true,
+            speed: 1.02,
+            pitch: 1.01,
+            color_filter: 'warm',
+            location_preset: 'london',
+            device_preset: 'iphone14',
+            scramble_fingerprint: true
+        };
+
+        // ── Bootstrap ──
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            updateChipDisplay();
+
+            const savedUrl = localStorage.getItem(STORAGE_KEY_AGENT);
+            if (savedUrl) {
+                // Already configured — hide setup modal and check connection
+                document.getElementById('setup-modal').classList.remove('active');
+                checkLocalAgent();
+            } else {
+                // First time — show setup modal
+                document.getElementById('setup-modal').classList.add('active');
+            }
+
+            const hash = window.location.hash;
+            if (hash.startsWith('#project/')) {
+                openProjectDetails(decodeURIComponent(hash.substring(9)));
+            } else if (hash === '#projects') {
+                navigateTo('view-projects');
+            } else {
+                navigateTo('view-import');
+            }
+        });
+
+        // ── Setup Modal ──
+        function openSetupModal() {
+            const saved = getAgentBase();
+            if (saved) document.getElementById('setup-url-input').value = saved;
+            document.getElementById('setup-modal').classList.add('active');
+        }
+
+        async function connectAgent() {
+            const inputVal = document.getElementById('setup-url-input').value.trim().replace(/\/$/, '');
+            if (!inputVal) {
+                showToast('Please enter a valid agent URL.', 'error');
+                return;
+            }
+
+            const btn = document.querySelector('.setup-connect-btn');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+
+            try {
+                const res = await fetch(`${inputVal}/api/outputs`, { signal: AbortSignal.timeout(5000) });
+                if (!res.ok) throw new Error('Bad response');
+
+                localStorage.setItem(STORAGE_KEY_AGENT, inputVal);
+                document.getElementById('setup-modal').classList.remove('active');
+                updateChipDisplay(true);
+                updateStatusBar(true, inputVal);
+                showToast('Agent connected successfully!', 'success');
+                refreshProjects();
+            } catch (e) {
+                showToast(`Could not reach ${inputVal} — make sure app.py is running.`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Connect →';
+            }
+        }
+
+        // ── Agent chip in titlebar ──
+        function updateChipDisplay(online = false) {
+            const url = getAgentBase();
+            const chip = document.getElementById('chip-url-text');
+            const dot = document.getElementById('chip-dot');
+
+            chip.textContent = url ? url.replace(/^https?:\/\//, '') : 'Not connected';
+            dot.className = 'dot' + (online ? ' online' : '');
+        }
+
+        // ── Connection check ──
+        async function checkLocalAgent(isManualRetry = false) {
+            const base = getAgentBase();
+            if (!base) return;
+
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+
+            try {
+                const res = await fetch(`${base}/api/outputs`, { signal: AbortSignal.timeout(4000) });
+                if (!res.ok) throw new Error();
+
+                statusDot.className = 'status-indicator-dot online';
+                statusText.innerText = `Agent Connected — ${base.replace(/^https?:\/\//, '')}`;
+                updateChipDisplay(true);
+
+                const data = await res.json();
+                if (data.success) currentProjects = data.projects;
+
+                if (isManualRetry) {
+                    showToast('Successfully connected to local processing agent!', 'success');
+                    refreshProjects();
+                }
+            } catch (e) {
+                statusDot.className = 'status-indicator-dot';
+                statusText.innerText = 'Agent Offline — click "Agent Connection" to reconnect';
+                updateChipDisplay(false);
+                if (isManualRetry) {
+                    showToast('Could not reach agent. Is app.py running?', 'error');
+                }
+            }
+        }
+
+        function updateStatusBar(online, url) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            dot.className = 'status-indicator-dot' + (online ? ' online' : '');
+            text.innerText = online
+                ? `Agent Connected — ${url.replace(/^https?:\/\//, '')}`
+                : 'Agent Offline';
+        }
+
+        // ── Toast ──
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success'
+                ? `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+                : `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+            toast.innerHTML = `${icon}<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ── Navigation ──
+        function navigateTo(viewId) {
+            document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+            const target = document.getElementById(viewId);
+            if (target) target.classList.add('active');
+
+            document.getElementById('nav-btn-import').classList.toggle('active', viewId === 'view-import');
+            document.getElementById('nav-btn-projects').classList.toggle('active', viewId === 'view-projects');
+
+            if (viewId === 'view-import') window.location.hash = '';
+            else if (viewId === 'view-projects') { window.location.hash = 'projects'; refreshProjects(); }
+        }
+
+        // ── Form helpers ──
+        function toggleJSONCollapse() {
+            const container = document.getElementById('json-cuts-container');
+            const arrow = document.getElementById('json-arrow');
+            container.classList.toggle('expanded');
+            arrow.innerText = container.classList.contains('expanded') ? '▼' : '▶';
+        }
+
+        function toggleAiFields() {
+            document.getElementById('openai-key-group').style.display =
+                document.getElementById('ai_extract').checked ? 'block' : 'none';
+        }
+
+        // ── Settings ──
+        function loadSettings() {
+            const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
+            if (saved) {
+                try { globalSettings = { ...globalSettings, ...JSON.parse(saved) }; }
+                catch(e) { console.error('Settings parse error', e); }
+            }
+            document.getElementById('settings_openai_key').value = globalSettings.openai_key || '';
+            document.getElementById('magic_zoom').value = globalSettings.zoom;
+            document.getElementById('magic_zoom_val').innerText = globalSettings.zoom + '%';
+            document.getElementById('magic_mirror').checked = globalSettings.mirror;
+            document.getElementById('magic_speed').value = globalSettings.speed;
+            document.getElementById('magic_speed_val').innerText = globalSettings.speed + 'x';
+            document.getElementById('magic_pitch').value = globalSettings.pitch;
+            document.getElementById('magic_pitch_val').innerText = globalSettings.pitch + 'x';
+            document.getElementById('magic_location').value = globalSettings.location_preset;
+            document.getElementById('magic_device').value = globalSettings.device_preset;
+            document.getElementById('magic_scramble').checked = globalSettings.scramble_fingerprint;
+
+            const formKey = document.getElementById('openai_key');
+            formKey.placeholder = globalSettings.openai_key
+                ? 'Using saved API Key from configurations'
+                : 'Enter key (or leave empty if saved in Settings)';
+        }
+
+        function saveSettings() {
+            globalSettings.openai_key = document.getElementById('settings_openai_key').value.trim();
+            globalSettings.zoom = parseFloat(document.getElementById('magic_zoom').value);
+            globalSettings.mirror = document.getElementById('magic_mirror').checked;
+            globalSettings.speed = parseFloat(document.getElementById('magic_speed').value);
+            globalSettings.pitch = parseFloat(document.getElementById('magic_pitch').value);
+            globalSettings.color_filter = document.getElementById('magic_filter').value;
+            globalSettings.location_preset = document.getElementById('magic_location').value;
+            globalSettings.device_preset = document.getElementById('magic_device').value;
+            globalSettings.scramble_fingerprint = document.getElementById('magic_scramble').checked;
+
+            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(globalSettings));
+            loadSettings();
+            toggleSettingsModal();
+            showToast('Configurations updated successfully!');
+        }
+
+        function toggleSettingsModal() {
+            document.getElementById('settings-modal').classList.toggle('active');
+        }
+
+        function closeSettingsModalOnOutside(e) {
+            if (e.target.id === 'settings-modal') toggleSettingsModal();
+        }
+
+        // ── Projects ──
+        async function refreshProjects() {
+            const base = getAgentBase();
+            if (!base) { openSetupModal(); return; }
+            try {
+                const res = await fetch(`${base}/api/outputs`);
+                const data = await res.json();
+                if (data.success) { currentProjects = data.projects; renderProjectsGrid(); }
+            } catch(e) {
+                console.error('Could not fetch projects', e);
+                showToast('Could not reach agent.', 'error');
+            }
+        }
+
+        function renderProjectsGrid() {
+            const grid = document.getElementById('projects-grid');
+            grid.innerHTML = '';
+
+            if (!currentProjects.length) {
+                grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:3rem 0;">No projects found. Launch your first Splitter pipeline!</div>`;
+                return;
+            }
+
+            currentProjects.forEach(proj => {
+                const dateStr = new Date(proj.modified_time * 1000).toLocaleDateString(undefined, {
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.onclick = () => openProjectDetails(proj.name);
+                card.innerHTML = `
+                    <div class="project-card-header">
+                        <span class="project-folder-icon">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                        </span>
+                        <span>Project</span>
+                    </div>
+                    <div class="project-title">${proj.name.replace(/_/g, ' ')}</div>
+                    <div class="project-meta-row">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+                            <span>${proj.clips.length} segments</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:4px;margin-left:auto;">
+                            <span>${dateStr}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function openProjectDetails(projectName) {
+            activeProjectName = projectName;
+            window.location.hash = `project/${encodeURIComponent(projectName)}`;
+            navigateTo('view-project-details');
+            document.getElementById('details-project-name').innerText = projectName.replace(/_/g, ' ');
+            await loadProjectClips();
+        }
+
+        async function loadProjectClips() {
+            const base = getAgentBase();
+            if (!base) return;
+            try {
+                const res = await fetch(`${base}/api/outputs`);
+                const data = await res.json();
+                if (data.success) {
+                    currentProjects = data.projects;
+                    const proj = currentProjects.find(p => p.name === activeProjectName);
+                    if (proj) renderProjectDetails(proj);
+                    else { showToast('Project not found.', 'error'); navigateTo('view-projects'); }
+                }
+            } catch(e) { console.error('Could not load project', e); }
+        }
+
+        function renderProjectDetails(project) {
+            const base = getAgentBase();
+            const grid = document.getElementById('project-clips-grid');
+            grid.innerHTML = '';
+
+            const totalClips = project.clips.length;
+            const magicClips = project.clips.filter(c => c.magic !== null).length;
+            document.getElementById('stat-total-clips').innerText = `${totalClips} segments`;
+            document.getElementById('stat-magic-clips').innerText = `${magicClips} Magic Completed`;
+
+            const btnMagicAll = document.getElementById('btn-magic-all-clips');
+            if (magicClips === totalClips) {
+                btnMagicAll.style.opacity = '0.5';
+                btnMagicAll.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> All Magic Done`;
+            } else {
+                btnMagicAll.style.opacity = '1';
+                btnMagicAll.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg> ✦ Run Magic on All Clips`;
+            }
+
+            const themes = ['pastel-green','pastel-purple','pastel-yellow','pastel-pink','pastel-blue'];
+
+            project.clips.forEach((clip, index) => {
+                const themeClass = themes[index % themes.length];
+                const hasMagic = clip.magic !== null;
+                const fileObj = hasMagic ? clip.magic : clip.fresh;
+                if (!fileObj) return;
+
+                const sizeMb = (fileObj.size_bytes / (1024 * 1024)).toFixed(1);
+                const card = document.createElement('div');
+                card.className = `pastel-card ${themeClass}`;
+                card.innerHTML = `
+                    <div>
+                        <div class="pastel-card-header">
+                            <span class="pastel-card-tag">Segment ${index + 1}</span>
+                            <span class="pastel-card-time">${sizeMb} MB</span>
+                        </div>
+                        <div class="pastel-card-title">${clip.title.replace(/_/g, ' ')}</div>
+                        <div class="pastel-card-desc">${fileObj.filename}</div>
+                    </div>
+                    <div class="pastel-card-footer">
+                        <span class="card-status-indicator ${hasMagic ? 'status-magic' : 'status-fresh'}">
+                            ${hasMagic ? '✦ Magic Active' : 'Raw Split'}
+                        </span>
+                        <div class="pastel-card-actions">
+                            <button class="card-action-btn" title="Preview Clip" onclick="playVideoPreview('${base}/outputs/${encodeURIComponent(fileObj.filename)}')">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            </button>
+                            <a href="${base}/outputs/${encodeURIComponent(fileObj.filename)}" class="card-action-btn" download title="Download Clip">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ── Video preview ──
+        function playVideoPreview(srcUrl) {
+            document.getElementById('preview-video-player').src = srcUrl;
+            document.getElementById('video-preview-modal').classList.add('active');
+        }
+
+        function closeVideoPreviewModal(e) {
+            if (e.target.id === 'video-preview-modal' || e.target.classList.contains('video-modal-container')) {
+                document.getElementById('video-preview-modal').classList.remove('active');
+                const player = document.getElementById('preview-video-player');
+                player.pause();
+                player.src = '';
+            }
+        }
+
+        // ── Split form submit ──
+        function handleSplitSubmit(e) {
+            e.preventDefault();
+            const base = getAgentBase();
+            if (!base) { openSetupModal(); return; }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const tracker = document.getElementById('pipeline-tracker');
+            const urlVal = encodeURIComponent(document.getElementById('url').value.trim());
+            const jsonText = document.getElementById('json_data').value.trim();
+            const aiExtractChecked = document.getElementById('ai_extract').checked;
+
+            if (!aiExtractChecked && !jsonText) {
+                showToast('Please provide Cuts JSON or enable AI Extraction.', 'error');
+                return;
+            }
+
+            if (jsonText) {
+                try { JSON.parse(jsonText); }
+                catch(err) { showToast('Cuts Payload contains invalid JSON.', 'error'); return; }
+            }
+
+            submitBtn.disabled = true;
+            tracker.style.display = 'block';
+            resetTrackerSteps();
+            updateTracker('Initiating connection...', 'Establishing pipeline stream...', 0);
+
+            const projectVal = encodeURIComponent(document.getElementById('project_name').value.trim());
+            const openaiKeyVal = encodeURIComponent(document.getElementById('openai_key').value.trim() || globalSettings.openai_key);
+
+            const sseUrl = `${base}/events?url=${urlVal}&json_data=${encodeURIComponent(jsonText)}&mode=fast&quality=best&project_name=${projectVal}&ai_extract=${aiExtractChecked}&openai_key=${openaiKeyVal}`;
+            const eventSource = new EventSource(sseUrl);
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'status') {
+                    updateTracker('Processing Stream Node', data.message);
+                } else if (data.type === 'download_progress') {
+                    setStepActive('step-download');
+                    if (data.percent !== null) {
+                        updateTracker(`Downloading (${data.percent}%)`, `Speed: ${data.speed} • ETA: ${data.eta}`, data.percent * 0.8);
+                    } else {
+                        updateTracker('Downloading Stream', `Received: ${data.downloaded_mb} MB`, 40);
+                    }
+                } else if (data.type === 'trim_start') {
+                    setStepCompleted('step-download');
+                    setStepActive('step-extract');
+                    setStepActive('step-split');
+                    updateTracker(`Slicing: ${data.title}`, `Range: ${data.start}s to ${data.end}s`, 85);
+                } else if (data.type === 'done') {
+                    setStepCompleted('step-extract');
+                    setStepCompleted('step-split');
+                    updateTracker('Pipeline Complete', 'All segment cuts isolated successfully.', 100);
+                    eventSource.close();
+                    submitBtn.disabled = false;
+                    showToast('Splitter pipeline finished compilation!');
+                    const btnContainer = document.getElementById('take-me-btn-container');
+                    const takeMeBtn = document.getElementById('take-me-btn');
+                    btnContainer.style.display = 'block';
+                    takeMeBtn.onclick = () => {
+                        openProjectDetails(data.project_name);
+                        tracker.style.display = 'none';
+                        btnContainer.style.display = 'none';
+                        document.getElementById('splitter-form').reset();
+                    };
+                } else if (data.type === 'error') {
+                    eventSource.close();
+                    submitBtn.disabled = false;
+                    updateTracker('Pipeline Failure', data.message, 0);
+                    showToast(data.message, 'error');
+                }
+            };
+
+            eventSource.onerror = function() {
+                eventSource.close();
+                submitBtn.disabled = false;
+                updateTracker('Stream Disconnected', 'Error communicating with local agent.', 0);
+                showToast('Connection to agent lost.', 'error');
+            };
+        }
+
+        // ── Tracker helpers ──
+        function updateTracker(title, subtitle, percent = null) {
+            document.getElementById('tracker-title').innerText = title;
+            document.getElementById('tracker-subtitle').innerText = subtitle;
+            if (percent !== null) document.getElementById('pipeline-bar').style.width = percent + '%';
+        }
+
+        function resetTrackerSteps() {
+            document.querySelectorAll('.pipeline-step-node').forEach(n => n.className = 'pipeline-step-node');
+            document.getElementById('take-me-btn-container').style.display = 'none';
+        }
+
+        function setStepActive(id) { const s = document.getElementById(id); if(s) { s.classList.remove('completed'); s.classList.add('active'); } }
+        function setStepCompleted(id) { const s = document.getElementById(id); if(s) { s.classList.remove('active'); s.classList.add('completed'); } }
+
+        // ── Magic Pipeline ──
+        async function triggerMagicPipeline() {
+            const base = getAgentBase();
+            if (!activeProjectName || !base) return;
+
+            const overlay = document.getElementById('magic-overlay');
+            const statusText = document.getElementById('magic-overlay-status');
+            const progressFill = document.getElementById('magic-progress-fill');
+
+            overlay.classList.add('active');
+            progressFill.style.width = '0%';
+
+            let idx = 0;
+            const msgs = [
+                'Running aspect ratio conversion (9:16)...',
+                'Synthesizing blurred background filler...',
+                'Applying warm color grading filter...',
+                'Injecting location coordinates and device metadata...',
+                'Scrambling fingerprint bit hashes...'
+            ];
+
+            statusText.innerText = msgs[0];
+            const interval = setInterval(() => {
+                idx = (idx + 1) % msgs.length;
+                statusText.innerText = msgs[idx];
+                let pct = parseFloat(progressFill.style.width) || 0;
+                if (pct < 90) { pct += Math.random() * 10; if (pct > 90) pct = 90; progressFill.style.width = pct + '%'; }
+            }, 2500);
+
+            try {
+                const res = await fetch(`${base}/magic`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_name: activeProjectName,
+                        zoom: globalSettings.zoom,
+                        mirror: globalSettings.mirror,
+                        speed: globalSettings.speed,
+                        pitch: globalSettings.pitch,
+                        color_filter: globalSettings.color_filter,
+                        location_preset: globalSettings.location_preset,
+                        device_preset: globalSettings.device_preset,
+                        scramble_fingerprint: globalSettings.scramble_fingerprint
+                    })
+                });
+
+                const data = await res.json();
+                clearInterval(interval);
+
+                if (data.success) {
+                    progressFill.style.width = '100%';
+                    statusText.innerText = 'Magic pipeline completed!';
+                    showToast('Magic transformation complete!');
+                    setTimeout(() => { overlay.classList.remove('active'); loadProjectClips(); }, 1200);
+                } else {
+                    overlay.classList.remove('active');
+                    showToast(data.error || 'Magic processing error.', 'error');
+                }
+            } catch(err) {
+                clearInterval(interval);
+                overlay.classList.remove('active');
+                showToast('Could not reach magic server.', 'error');
+            }
+        }
+
+        // ── Copy AI Prompt ──
+        async function copyAIPrompt() {
+            const base = getAgentBase();
+            if (!base) { openSetupModal(); return; }
+
+            const urlVal = document.getElementById('url').value.trim();
+            if (!urlVal) { showToast('Please paste a YouTube URL first.', 'error'); return; }
+
+            const btn = document.getElementById('copy-prompt-btn');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:inline-block;vertical-align:middle;margin-right:4px;animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M4 12a8 8 0 018-8v8H4z" fill="currentColor"/></svg>Fetching...`;
+
+            try {
+                const res = await fetch(`${base}/api/youtube-prompt?url=${encodeURIComponent(urlVal)}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to fetch prompt.');
+                await navigator.clipboard.writeText(data.prompt);
+                showToast('AI Clip prompt copied!');
+            } catch(err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        }
+
+        // Spinner keyframe for copy button
+        const spinStyle = document.createElement('style');
+        spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+        document.head.appendChild(spinStyle);
+    </script>
+</body>
+</html>
