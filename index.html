@@ -1958,6 +1958,7 @@
                     <div class="form-group">
                         <label for="magic_location">Location Metadata</label>
                         <select id="magic_location" class="form-control no-icon">
+                            <option value="none">None (Stripped)</option>
                             <option value="london">London, UK</option>
                             <option value="manchester">Manchester, UK</option>
                             <option value="birmingham">Birmingham, UK</option>
@@ -1965,8 +1966,12 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="magic_device">Device Metadata</label>
+                        <label for="magic_device">Device / Editor Metadata</label>
                         <select id="magic_device" class="form-control no-icon">
+                            <option value="premiere">Adobe Premiere Pro</option>
+                            <option value="davinci">DaVinci Resolve</option>
+                            <option value="capcut">CapCut Desktop</option>
+                            <option value="clean">Stripped / Clean Metadata</option>
                             <option value="iphone14">iPhone 14 Pro Max</option>
                             <option value="iphone13">iPhone 13 Pro</option>
                             <option value="iphone15">iPhone 15 Pro</option>
@@ -2157,8 +2162,8 @@
             speed: 1.02,
             pitch: 1.01,
             color_filter: 'warm',
-            location_preset: 'london',
-            device_preset: 'iphone14',
+            location_preset: 'none',
+            device_preset: 'premiere',
             scramble_fingerprint: true,
             fps: 'original',
             color_space: 'bt709',
