@@ -1416,6 +1416,115 @@
 
         .toast.success { border-left: 3px solid var(--success-color); }
         .toast.error { border-left: 3px solid var(--error-color); }
+
+        /* Agent Download Banner & Buttons */
+        .agent-download-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(79, 70, 229, 0.04));
+            border: 1px solid rgba(124, 58, 237, 0.25);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin: 0 auto 1.5rem;
+            max-width: 640px;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.05);
+            gap: 1.5rem;
+            box-sizing: border-box;
+        }
+
+        .banner-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .banner-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: rgba(124, 58, 237, 0.15);
+            color: #a78bfa;
+            flex-shrink: 0;
+        }
+
+        .banner-text {
+            text-align: left;
+        }
+
+        .banner-text h3 {
+            margin: 0 0 0.25rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .banner-text p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .banner-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-gradient);
+            color: white !important;
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+
+        .banner-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
+        }
+
+        .sidebar-btn.download-btn {
+            border: 1px dashed rgba(124, 58, 237, 0.4);
+            background: rgba(124, 58, 237, 0.05);
+            color: #a78bfa;
+            margin-bottom: 0.25rem;
+            justify-content: center;
+        }
+
+        .sidebar-btn.download-btn:hover {
+            background: rgba(124, 58, 237, 0.12);
+            border-style: solid;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .agent-download-banner {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                gap: 1rem;
+            }
+            .banner-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            .banner-text {
+                text-align: center;
+            }
+            .banner-btn {
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1471,6 +1580,10 @@
             </div>
             
             <div class="sidebar-footer">
+                <a href="https://github.com/danish-fareed/chauxai-web/releases/download/v1.0.0/ChauxAI-Agent-v1.0.0-Windows-x64-Setup.exe" class="sidebar-btn download-btn" download style="text-decoration: none;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Download Agent
+                </a>
                 <button class="sidebar-btn" onclick="openSetupModal()">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
                     Agent Connection
@@ -1490,6 +1603,23 @@
                 <div class="hero-section">
                     <h1 class="hero-title">Video <span>Splitter</span></h1>
                     <p class="hero-subtitle">Input a podcast or video link to extract viral short-form clips. Your local agent handles all the processing — no cloud uploads needed.</p>
+                </div>
+
+                <!-- Agent Download Banner -->
+                <div class="agent-download-banner" id="agent-download-banner">
+                    <div class="banner-content">
+                        <div class="banner-icon">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        </div>
+                        <div class="banner-text">
+                            <h3>Download ChauxAI Desktop Agent (v1.0.0)</h3>
+                            <p>To start splitting videos, you need the desktop agent running locally. Download for Windows (28.3 MB).</p>
+                        </div>
+                    </div>
+                    <a href="https://github.com/danish-fareed/chauxai-web/releases/download/v1.0.0/ChauxAI-Agent-v1.0.0-Windows-x64-Setup.exe" class="banner-btn" download>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download (.exe)
+                    </a>
                 </div>
                 
                 <div class="widget-card" style="max-width: 640px; margin: 0 auto;">
@@ -1682,6 +1812,15 @@
             </div>
 
             <div class="setup-body">
+                <div style="background: rgba(124, 58, 237, 0.08); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.8rem; line-height: 1.4; display: flex; align-items: center; gap: 0.75rem;">
+                    <svg width="20" height="20" fill="none" stroke="#a78bfa" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0;"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <div style="text-align: left;">
+                        <strong>Recommended:</strong> Download and run the <a href="https://github.com/danish-fareed/chauxai-web/releases/download/v1.0.0/ChauxAI-Agent-v1.0.0-Windows-x64-Setup.exe" style="color: #c084fc; font-weight: 700; text-decoration: underline;" download>ChauxAI Desktop Agent Setup (.exe)</a>.
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-bottom: 1rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Or run manually from source:</div>
+
                 <div class="setup-step">
                     <div class="setup-step-num">1</div>
                     <div class="setup-step-text">
@@ -1978,6 +2117,12 @@
 
             chip.textContent = url ? url.replace(/^https?:\/\//, '') : 'Not connected';
             dot.className = 'dot' + (online ? ' online' : '');
+
+            // Show/hide download banner depending on connection status
+            const banner = document.getElementById('agent-download-banner');
+            if (banner) {
+                banner.style.display = online ? 'none' : 'flex';
+            }
         }
 
         // ── Connection check ──
