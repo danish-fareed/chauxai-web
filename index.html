@@ -1986,6 +1986,111 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+
+                <div class="modal-section-title" style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span>Advanced Bypass & Encoding</span>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="magic_fps">Force FPS</label>
+                        <select id="magic_fps" class="form-control no-icon">
+                            <option value="original">Keep Original FPS</option>
+                            <option value="24">24 FPS (Cinematic)</option>
+                            <option value="30">30 FPS (Standard)</option>
+                            <option value="60">60 FPS (High Smoothness)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="magic_colorspace">Color Space</label>
+                        <select id="magic_colorspace" class="form-control no-icon">
+                            <option value="bt709">BT.709 (Recommended for Web)</option>
+                            <option value="srgb">sRGB</option>
+                            <option value="original">Keep Original Space</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="magic_chroma">Chroma Subsampling</label>
+                        <select id="magic_chroma" class="form-control no-icon">
+                            <option value="original">Keep Original Subsampling</option>
+                            <option value="yuv420p">yuv420p (Broadest compatibility)</option>
+                            <option value="yuv422p">yuv422p (Higher quality color)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="magic_preset">FFmpeg Preset</label>
+                        <select id="magic_preset" class="form-control no-icon">
+                            <option value="ultrafast">Ultrafast (Fastest render)</option>
+                            <option value="superfast">Superfast</option>
+                            <option value="veryfast">Veryfast</option>
+                            <option value="faster">Faster</option>
+                            <option value="fast">Fast</option>
+                            <option value="medium">Medium (Better compression)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-top: 1rem;">
+                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem; text-align: left;">Algorithmic Metadata Bypass Toggles</div>
+                    
+                    <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <div class="toggle-info" style="text-align: left;">
+                            <span class="toggle-title" style="font-size: 0.8rem;">Rotate Shift</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Slightly displace video orientation metadata.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="magic_rotateshift" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
+                        <div class="toggle-info" style="text-align: left;">
+                            <span class="toggle-title" style="font-size: 0.8rem;">GOP Displace</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Alter Group of Pictures structure.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="magic_gop" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
+                        <div class="toggle-info" style="text-align: left;">
+                            <span class="toggle-title" style="font-size: 0.8rem;">Motion Vectors Alteration</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Disrupt pixel motion tracking data.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="magic_motionvectors" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
+                        <div class="toggle-info" style="text-align: left;">
+                            <span class="toggle-title" style="font-size: 0.8rem;">Audio Phase Inversion</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Shift audio phase subtly to bypass audio matching.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="magic_audiophase" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
+                        <div class="toggle-info" style="text-align: left;">
+                            <span class="toggle-title" style="font-size: 0.8rem;">Rebuild MP4 Container</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Rebuild the file header to reset all file signatures.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="magic_rebuild" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
             
             <div class="modal-footer">
@@ -2050,7 +2155,16 @@
             color_filter: 'warm',
             location_preset: 'london',
             device_preset: 'iphone14',
-            scramble_fingerprint: true
+            scramble_fingerprint: true,
+            fps: 'original',
+            color_space: 'bt709',
+            chroma_subsampling: 'original',
+            rotate_shift: true,
+            gop_displace: true,
+            motion_vectors: true,
+            audio_phase: true,
+            rebuild_container: true,
+            preset: 'ultrafast'
         };
 
         // ── Bootstrap ──
@@ -2230,9 +2344,21 @@
             document.getElementById('magic_speed_val').innerText = globalSettings.speed + 'x';
             document.getElementById('magic_pitch').value = globalSettings.pitch;
             document.getElementById('magic_pitch_val').innerText = globalSettings.pitch + 'x';
+            document.getElementById('magic_filter').value = globalSettings.color_filter || 'warm';
             document.getElementById('magic_location').value = globalSettings.location_preset;
             document.getElementById('magic_device').value = globalSettings.device_preset;
             document.getElementById('magic_scramble').checked = globalSettings.scramble_fingerprint;
+            
+            // Advanced settings loading
+            document.getElementById('magic_fps').value = globalSettings.fps || 'original';
+            document.getElementById('magic_colorspace').value = globalSettings.color_space || 'bt709';
+            document.getElementById('magic_chroma').value = globalSettings.chroma_subsampling || 'original';
+            document.getElementById('magic_preset').value = globalSettings.preset || 'ultrafast';
+            document.getElementById('magic_rotateshift').checked = globalSettings.rotate_shift !== false;
+            document.getElementById('magic_gop').checked = globalSettings.gop_displace !== false;
+            document.getElementById('magic_motionvectors').checked = globalSettings.motion_vectors !== false;
+            document.getElementById('magic_audiophase').checked = globalSettings.audio_phase !== false;
+            document.getElementById('magic_rebuild').checked = globalSettings.rebuild_container !== false;
 
             const formKey = document.getElementById('openai_key');
             formKey.placeholder = globalSettings.openai_key
@@ -2250,6 +2376,17 @@
             globalSettings.location_preset = document.getElementById('magic_location').value;
             globalSettings.device_preset = document.getElementById('magic_device').value;
             globalSettings.scramble_fingerprint = document.getElementById('magic_scramble').checked;
+
+            // Advanced settings saving
+            globalSettings.fps = document.getElementById('magic_fps').value;
+            globalSettings.color_space = document.getElementById('magic_colorspace').value;
+            globalSettings.chroma_subsampling = document.getElementById('magic_chroma').value;
+            globalSettings.preset = document.getElementById('magic_preset').value;
+            globalSettings.rotate_shift = document.getElementById('magic_rotateshift').checked;
+            globalSettings.gop_displace = document.getElementById('magic_gop').checked;
+            globalSettings.motion_vectors = document.getElementById('magic_motionvectors').checked;
+            globalSettings.audio_phase = document.getElementById('magic_audiophase').checked;
+            globalSettings.rebuild_container = document.getElementById('magic_rebuild').checked;
 
             localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(globalSettings));
             loadSettings();
@@ -2551,7 +2688,16 @@
                         color_filter: globalSettings.color_filter,
                         location_preset: globalSettings.location_preset,
                         device_preset: globalSettings.device_preset,
-                        scramble_fingerprint: globalSettings.scramble_fingerprint
+                        scramble_fingerprint: globalSettings.scramble_fingerprint,
+                        fps: globalSettings.fps,
+                        color_space: globalSettings.color_space,
+                        chroma_subsampling: globalSettings.chroma_subsampling,
+                        preset: globalSettings.preset,
+                        rotate_shift: globalSettings.rotate_shift,
+                        gop_displace: globalSettings.gop_displace,
+                        motion_vectors: globalSettings.motion_vectors,
+                        audio_phase: globalSettings.audio_phase,
+                        rebuild_container: globalSettings.rebuild_container
                     })
                 });
 
