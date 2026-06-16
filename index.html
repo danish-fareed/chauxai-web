@@ -1923,8 +1923,8 @@
                         <select id="magic_filter" class="form-control no-icon">
                             <option value="warm">Warm grade (Recommended)</option>
                             <option value="cool">Cool studio</option>
-                            <option value="vintage">Vintage film</option>
-                            <option value="cyber">Cyberpunk grade</option>
+                            <option value="vibrant">Vibrant contrast</option>
+                            <option value="cinematic">Cinematic contrast</option>
                             <option value="none">None (Keep original)</option>
                         </select>
                     </div>
@@ -1956,17 +1956,16 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="magic_location">GPS Location Spoof</label>
+                        <label for="magic_location">Location Metadata</label>
                         <select id="magic_location" class="form-control no-icon">
                             <option value="london">London, UK</option>
                             <option value="manchester">Manchester, UK</option>
                             <option value="birmingham">Birmingham, UK</option>
                             <option value="edinburgh">Edinburgh, UK</option>
-                            <option value="newyork">New York City, USA</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="magic_device">Device Header Spoof</label>
+                        <label for="magic_device">Device Metadata</label>
                         <select id="magic_device" class="form-control no-icon">
                             <option value="iphone14">iPhone 14 Pro Max</option>
                             <option value="iphone13">iPhone 13 Pro</option>
@@ -1978,8 +1977,8 @@
 
                 <div class="toggle-row" style="margin-bottom: 0;">
                     <div class="toggle-info">
-                        <span class="toggle-title">Randomize Frame Content Hashes</span>
-                        <span class="toggle-desc">Slightly displace frame signatures to bypass filters.</span>
+                        <span class="toggle-title">Micro Pixel Adjustment</span>
+                        <span class="toggle-desc">Applies a tiny brightness/contrast normalization pass.</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="magic_scramble" checked>
@@ -1988,7 +1987,7 @@
                 </div>
 
                 <div class="modal-section-title" style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
-                    <span>Advanced Bypass & Encoding</span>
+                    <span>Advanced Export & Encoding</span>
                 </div>
                 
                 <div class="form-row">
@@ -1997,7 +1996,9 @@
                         <select id="magic_fps" class="form-control no-icon">
                             <option value="original">Keep Original FPS</option>
                             <option value="24">24 FPS (Cinematic)</option>
+                            <option value="25">25 FPS (PAL)</option>
                             <option value="30">30 FPS (Standard)</option>
+                            <option value="50">50 FPS (Smooth PAL)</option>
                             <option value="60">60 FPS (High Smoothness)</option>
                         </select>
                     </div>
@@ -2005,7 +2006,8 @@
                         <label for="magic_colorspace">Color Space</label>
                         <select id="magic_colorspace" class="form-control no-icon">
                             <option value="bt709">BT.709 (Recommended for Web)</option>
-                            <option value="srgb">sRGB</option>
+                            <option value="bt601">BT.601</option>
+                            <option value="bt2020">BT.2020</option>
                             <option value="original">Keep Original Space</option>
                         </select>
                     </div>
@@ -2015,9 +2017,11 @@
                     <div class="form-group">
                         <label for="magic_chroma">Chroma Subsampling</label>
                         <select id="magic_chroma" class="form-control no-icon">
-                            <option value="original">Keep Original Subsampling</option>
                             <option value="yuv420p">yuv420p (Broadest compatibility)</option>
                             <option value="yuv422p">yuv422p (Higher quality color)</option>
+                            <option value="yuv444p">yuv444p (Full color detail)</option>
+                            <option value="rgb24">RGB 24</option>
+                            <option value="original">Keep Original Subsampling</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -2034,12 +2038,12 @@
                 </div>
 
                 <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-top: 1rem;">
-                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem; text-align: left;">Algorithmic Metadata Bypass Toggles</div>
+                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem; text-align: left;">Advanced Export Toggles</div>
                     
                     <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
                         <div class="toggle-info" style="text-align: left;">
                             <span class="toggle-title" style="font-size: 0.8rem;">Rotate Shift</span>
-                            <span class="toggle-desc" style="font-size: 0.7rem;">Slightly displace video orientation metadata.</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Applies a subtle canvas rotation.</span>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="magic_rotateshift" checked>
@@ -2050,7 +2054,7 @@
                     <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
                         <div class="toggle-info" style="text-align: left;">
                             <span class="toggle-title" style="font-size: 0.8rem;">GOP Displace</span>
-                            <span class="toggle-desc" style="font-size: 0.7rem;">Alter Group of Pictures structure.</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Uses a fixed keyframe cadence.</span>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="magic_gop" checked>
@@ -2060,8 +2064,8 @@
 
                     <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
                         <div class="toggle-info" style="text-align: left;">
-                            <span class="toggle-title" style="font-size: 0.8rem;">Motion Vectors Alteration</span>
-                            <span class="toggle-desc" style="font-size: 0.7rem;">Disrupt pixel motion tracking data.</span>
+                            <span class="toggle-title" style="font-size: 0.8rem;">Motion Search</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Uses deeper motion estimation.</span>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="magic_motionvectors" checked>
@@ -2071,8 +2075,8 @@
 
                     <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
                         <div class="toggle-info" style="text-align: left;">
-                            <span class="toggle-title" style="font-size: 0.8rem;">Audio Phase Inversion</span>
-                            <span class="toggle-desc" style="font-size: 0.7rem;">Shift audio phase subtly to bypass audio matching.</span>
+                            <span class="toggle-title" style="font-size: 0.8rem;">Audio EQ Pass</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Applies subtle high/low filtering.</span>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="magic_audiophase" checked>
@@ -2083,7 +2087,7 @@
                     <div class="toggle-row" style="padding: 0.5rem 0; border: none; margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
                         <div class="toggle-info" style="text-align: left;">
                             <span class="toggle-title" style="font-size: 0.8rem;">Rebuild MP4 Container</span>
-                            <span class="toggle-desc" style="font-size: 0.7rem;">Rebuild the file header to reset all file signatures.</span>
+                            <span class="toggle-desc" style="font-size: 0.7rem;">Remuxes through a fresh container.</span>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="magic_rebuild" checked>
@@ -2158,7 +2162,7 @@
             scramble_fingerprint: true,
             fps: 'original',
             color_space: 'bt709',
-            chroma_subsampling: 'original',
+            chroma_subsampling: 'yuv420p',
             rotate_shift: true,
             gop_displace: true,
             motion_vectors: true,
@@ -2352,7 +2356,7 @@
             // Advanced settings loading
             document.getElementById('magic_fps').value = globalSettings.fps || 'original';
             document.getElementById('magic_colorspace').value = globalSettings.color_space || 'bt709';
-            document.getElementById('magic_chroma').value = globalSettings.chroma_subsampling || 'original';
+            document.getElementById('magic_chroma').value = globalSettings.chroma_subsampling || 'yuv420p';
             document.getElementById('magic_preset').value = globalSettings.preset || 'ultrafast';
             document.getElementById('magic_rotateshift').checked = globalSettings.rotate_shift !== false;
             document.getElementById('magic_gop').checked = globalSettings.gop_displace !== false;
@@ -2663,8 +2667,8 @@
                 'Running aspect ratio conversion (9:16)...',
                 'Synthesizing blurred background filler...',
                 'Applying warm color grading filter...',
-                'Injecting location coordinates and device metadata...',
-                'Scrambling fingerprint bit hashes...'
+                'Writing consistent export metadata...',
+                'Applying final encoding normalization...'
             ];
 
             statusText.innerText = msgs[0];
