@@ -1895,7 +1895,7 @@
                     <div class="locked-field">
                         <div class="locked-field-left">
                             <span class="locked-label">Quality Level</span>
-                            <span class="locked-val">Best</span>
+                            <span class="locked-val">1080p</span>
                         </div>
                         <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
                     </div>
@@ -2584,8 +2584,9 @@
 
             const projectVal = encodeURIComponent(document.getElementById('project_name').value.trim());
             const openaiKeyVal = encodeURIComponent(document.getElementById('openai_key').value.trim() || globalSettings.openai_key);
+            const aiExtractVal = aiExtractChecked ? 'true' : 'false';
 
-            const sseUrl = `${base}/events?url=${urlVal}&json_data=${encodeURIComponent(jsonText)}&mode=fast&quality=best&project_name=${projectVal}&ai_extract=${aiExtractChecked}&openai_key=${openaiKeyVal}`;
+            const sseUrl = `${base}/events?url=${urlVal}&json_data=${encodeURIComponent(jsonText)}&mode=fast&quality=1080p&project_name=${projectVal}&ai_extract=${aiExtractVal}&openai_key=${openaiKeyVal}`;
             const eventSource = new EventSource(sseUrl);
 
             eventSource.onmessage = function(event) {
