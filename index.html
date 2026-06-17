@@ -1988,6 +1988,17 @@
                     </label>
                 </div>
 
+                <div class="toggle-row" style="margin-top: 1rem; margin-bottom: 0;">
+                    <div class="toggle-info">
+                        <span class="toggle-title">Auto-Apply Magic Pipeline</span>
+                        <span class="toggle-desc">Automatically run the Magic Pipeline on all clips after splitting is done.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="magic_autoapply" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
                 <div class="modal-section-title" style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
                     <span>Advanced Export & Encoding</span>
                 </div>
@@ -2170,7 +2181,8 @@
             motion_vectors: true,
             audio_phase: true,
             rebuild_container: true,
-            preset: 'fast'
+            preset: 'fast',
+            auto_apply_magic: true
         };
 
         // ── Bootstrap ──
@@ -2354,6 +2366,7 @@
             document.getElementById('magic_location').value = globalSettings.location_preset;
             document.getElementById('magic_device').value = globalSettings.device_preset;
             document.getElementById('magic_scramble').checked = globalSettings.scramble_fingerprint;
+            document.getElementById('magic_autoapply').checked = globalSettings.auto_apply_magic !== false;
             
             // Advanced settings loading
             document.getElementById('magic_fps').value = globalSettings.fps || 'original';
@@ -2382,6 +2395,7 @@
             globalSettings.location_preset = document.getElementById('magic_location').value;
             globalSettings.device_preset = document.getElementById('magic_device').value;
             globalSettings.scramble_fingerprint = document.getElementById('magic_scramble').checked;
+            globalSettings.auto_apply_magic = document.getElementById('magic_autoapply').checked;
 
             // Advanced settings saving
             globalSettings.fps = document.getElementById('magic_fps').value;
@@ -2613,15 +2627,25 @@
                     eventSource.close();
                     submitBtn.disabled = false;
                     showToast('Splitter pipeline finished compilation!');
-                    const btnContainer = document.getElementById('take-me-btn-container');
-                    const takeMeBtn = document.getElementById('take-me-btn');
-                    btnContainer.style.display = 'block';
-                    takeMeBtn.onclick = () => {
-                        openProjectDetails(data.project_name);
-                        tracker.style.display = 'none';
-                        btnContainer.style.display = 'none';
-                        document.getElementById('splitter-form').reset();
-                    };
+                    
+                    if (globalSettings.auto_apply_magic) {
+                        setTimeout(() => {
+                            tracker.style.display = 'none';
+                            document.getElementById('splitter-form').reset();
+                            openProjectDetails(data.project_name);
+                            triggerMagicPipeline();
+                        }, 800);
+                    } else {
+                        const btnContainer = document.getElementById('take-me-btn-container');
+                        const takeMeBtn = document.getElementById('take-me-btn');
+                        btnContainer.style.display = 'block';
+                        takeMeBtn.onclick = () => {
+                            openProjectDetails(data.project_name);
+                            tracker.style.display = 'none';
+                            btnContainer.style.display = 'none';
+                            document.getElementById('splitter-form').reset();
+                        };
+                    }
                 } else if (data.type === 'error') {
                     eventSource.close();
                     submitBtn.disabled = false;
